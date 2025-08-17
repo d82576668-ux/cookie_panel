@@ -1,7 +1,102 @@
-body { font-family: Arial, sans-serif; background:#111; color:#eee; padding:20px;}
-table { width:100%; border-collapse: collapse; margin-top:20px;}
-th, td { border:1px solid #444; padding:8px; text-align:left;}
-th { background:#222; }
-a { color:#ff0080; text-decoration:none; }
-a:hover { text-decoration:underline; }
-pre { background:#222; padding:10px; border-radius:5px; overflow:auto;}
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #1e1e2f;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: linear-gradient(90deg, #ff0080, #8000ff);
+    padding: 20px;
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.container {
+    width: 90%;
+    margin: 20px auto;
+}
+
+.user-card {
+    background: rgba(30,30,50,0.8);
+    border-radius: 15px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 15px rgba(255,0,128,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.user-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 25px rgba(255,0,128,0.5);
+}
+
+.user-card h2 {
+    margin: 0 0 10px;
+    color: #ff0080;
+}
+
+.user-card p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.json-box {
+    background: #222;
+    padding: 10px;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 10px 0;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+img.screenshot {
+    max-width: 300px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+img.screenshot:hover {
+    transform: scale(1.05);
+}
+
+/* Modal for screenshot */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    padding-top: 60px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.9);
+}
+
+.modal-content {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+}
+
+.close-modal {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-modal:hover {
+    color: #ff0080;
+}
