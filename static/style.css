@@ -1,43 +1,51 @@
+/* Основные стили */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #1e1e2f;
-    color: #fff;
+    background: #0f0f1f;
+    color: #e0e0e0;
     margin: 0;
     padding: 0;
 }
 
 header {
     background: linear-gradient(90deg, #ff0080, #8000ff);
-    padding: 20px;
+    padding: 25px;
     text-align: center;
-    font-size: 28px;
+    font-size: 32px;
     font-weight: bold;
-    color: white;
-    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    color: #fff;
+    text-shadow: 0 0 15px rgba(255,0,128,0.6);
 }
 
+/* Контейнер */
 .container {
-    width: 90%;
+    width: 95%;
+    max-width: 1200px;
     margin: 20px auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
 }
 
+/* Карточка пользователя */
 .user-card {
-    background: rgba(30,30,50,0.8);
-    border-radius: 15px;
-    padding: 15px 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 0 15px rgba(255,0,128,0.3);
-    transition: transform 0.2s, box-shadow 0.2s;
+    background: rgba(30,30,50,0.85);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 0 20px rgba(255,0,128,0.3);
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .user-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0 25px rgba(255,0,128,0.5);
+    transform: translateY(-7px);
+    box-shadow: 0 0 35px rgba(255,0,128,0.7);
 }
 
 .user-card h2 {
     margin: 0 0 10px;
     color: #ff0080;
+    font-size: 24px;
+    text-shadow: 0 0 10px rgba(255,0,128,0.5);
 }
 
 .user-card p {
@@ -45,28 +53,33 @@ header {
     font-size: 14px;
 }
 
+/* JSON блок */
 .json-box {
-    background: #222;
-    padding: 10px;
-    border-radius: 10px;
+    background: #1c1c2c;
+    padding: 12px;
+    border-radius: 12px;
     overflow-x: auto;
     margin: 10px 0;
     font-family: monospace;
     font-size: 13px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
 }
 
+/* Скриншот */
 img.screenshot {
-    max-width: 300px;
-    border-radius: 10px;
+    max-width: 100%;
+    border-radius: 12px;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 15px rgba(255,0,128,0.5);
 }
 
 img.screenshot:hover {
     transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(255,0,128,0.8);
 }
 
-/* Modal for screenshot */
+/* Модальное окно */
 .modal {
     display: none;
     position: fixed;
@@ -77,13 +90,15 @@ img.screenshot:hover {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.9);
+    background-color: rgba(0,0,0,0.95);
 }
 
 .modal-content {
     margin: auto;
     display: block;
     max-width: 90%;
+    border-radius: 15px;
+    box-shadow: 0 0 25px rgba(255,0,128,0.8);
 }
 
 .close-modal {
@@ -91,7 +106,7 @@ img.screenshot:hover {
     top: 20px;
     right: 35px;
     color: #fff;
-    font-size: 40px;
+    font-size: 45px;
     font-weight: bold;
     cursor: pointer;
     transition: color 0.2s;
@@ -99,4 +114,23 @@ img.screenshot:hover {
 
 .close-modal:hover {
     color: #ff0080;
+}
+
+/* Кнопки */
+button.action-btn {
+    background: linear-gradient(90deg, #ff0080, #8000ff);
+    border: none;
+    color: white;
+    padding: 8px 15px;
+    margin: 5px 0;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 0 10px rgba(255,0,128,0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(255,0,128,0.8);
 }
