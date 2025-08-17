@@ -6,17 +6,16 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<h1>Admin Panel</h1>
-<table>
-<tr><th>ID</th><th>Username</th><th>Timestamp</th><th>Action</th></tr>
-{% for user in users %}
-<tr>
-<td>{{ user[0] }}</td>
-<td>{{ user[1] }}</td>
-<td>{{ user[2] }}</td>
-<td><a href="/user/{{ user[0] }}">View</a></td>
-</tr>
-{% endfor %}
-</table>
+<header>Admin Panel</header>
+<div class="container">
+    {% for user in users %}
+    <div class="user-card">
+        <h2>{{ user[1] }}</h2>
+        <p><strong>ID:</strong> {{ user[0] }}</p>
+        <p><strong>Timestamp:</strong> {{ user[2] }}</p>
+        <a href="/user/{{ user[0] }}" style="color:#ff0080; text-decoration:underline;">View Details</a>
+    </div>
+    {% endfor %}
+</div>
 </body>
 </html>
