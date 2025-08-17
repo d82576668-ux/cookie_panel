@@ -6,17 +6,49 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<h1>User {{ user[1] }}</h1>
-<p><strong>Timestamp:</strong> {{ user[6] }}</p>
-<h2>Cookies</h2>
-<pre>{{ user[2] }}</pre>
-<h2>History</h2>
-<pre>{{ user[3] }}</pre>
-<h2>System Info</h2>
-<pre>{{ user[4] }}</pre>
-{% if user[5] %}
-<h2>Screenshot</h2>
-<img src="data:image/png;base64,{{ user[5]|b64encode }}">
-{% endif %}
+<header>User {{ user[1] }} Details</header>
+<div class="container">
+    <div class="user-card">
+        <p><strong>ID:</strong> {{ user[0] }}</p>
+        <p><strong>Username:</strong> {{ user[1] }}</p>
+        <p><strong>Timestamp:</strong> {{ user[6] }}</p>
+
+        <h3>Cookies</h3>
+        <div class="json-box">{{ user[2] }}</div>
+
+        <h3>History</h3>
+        <div class="json-box">{{ user[3] }}</div>
+
+        <h3>System Info</h3>
+        <div class="json-box">{{ user[4] }}</div>
+
+        {% if user[5] %}
+        <h3>Screenshot</h3>
+        <img src="data:image/png;base64,{{ user[5]|b64encode }}" class="screenshot" id="screenshot">
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal for screenshot -->
+<div id="modal" class="modal">
+  <span class="close-modal">&times;</span>
+  <img class="modal-content" id="modal-img">
+</div>
+
+<script>
+const modal = document.getElementById("modal");
+const img = document.getElementById("screenshot");
+const modalImg = document.getElementById("modal-img");
+const span = document.getElementsByClassName("close-modal")[0];
+
+if(img){
+    img.onclick = function(){
+        modal.style.display = "block";
+        modalImg.src = this.src;
+    }
+}
+span.onclick = function() { modal.style.display = "none"; }
+window.onclick = function(event) { if(event.target == modal){ modal.style.display = "none"; } }
+</script>
 </body>
 </html>
