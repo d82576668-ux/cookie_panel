@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for
 from flask_httpauth import HTTPBasicAuth
 import sqlite3, os, json, base64
 from datetime import datetime
@@ -16,6 +16,7 @@ def verify(username, password):
 
 DB_FILE = "database.db"
 
+# Инициализация базы данных
 def init_db():
     if not os.path.exists(DB_FILE):
         conn = sqlite3.connect(DB_FILE)
@@ -34,6 +35,7 @@ def init_db():
 
 init_db()
 
+# Преобразование строки из БД в словарь
 def dict_from_row(row):
     if not row:
         return None
@@ -47,6 +49,7 @@ def dict_from_row(row):
         "timestamp": row[6]
     }
 
+# Админка
 @app.route('/')
 @auth.login_required
 def admin_panel():
@@ -58,6 +61,7 @@ def admin_panel():
     users = [{"id": r[0], "username": r[1], "timestamp": r[2]} for r in rows]
     return render_template('admin.html', users=users)
 
+# Просмотр пользователя
 @app.route('/user/<int:user_id>')
 @auth.login_required
 def view_user(user_id):
@@ -67,8 +71,11 @@ def view_user(user_id):
     row = c.fetchone()
     conn.close()
     user = dict_from_row(row)
+    if not user:
+        return "User not found", 404
     return render_template('user_detail.html', user=user)
 
+# Загрузка данных
 @app.route('/upload', methods=['POST'])
 def upload_data():
     data = request.json
@@ -78,7 +85,8 @@ def upload_data():
     system_info = json.dumps(data.get('systemInfo', {}))
     screenshot = data.get('screenshot', None)
     if screenshot:
-        screenshot = base64.b64decode(screenshot.split(',')[1])
+        # Декодирование base64 без префикса
+        screenshot = base64.b64decode(screenshot.split(',')[-1])
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     conn = sqlite3.connect(DB_FILE)
