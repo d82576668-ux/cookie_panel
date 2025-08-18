@@ -8,14 +8,26 @@
 <body>
 <header>Admin Panel</header>
 <div class="container">
-    {% for user in users %}
-    <div class="user-card">
-        <h2>{{ user[1] }}</h2>
-        <p><strong>ID:</strong> {{ user[0] }}</p>
-        <p><strong>Timestamp:</strong> {{ user[2] }}</p>
-        <a href="/user/{{ user[0] }}" class="action-btn">View Details</a>
-    </div>
-    {% endfor %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Timestamp</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.timestamp }}</td>
+            <td><a href="{{ url_for('view_user', user_id=user.id) }}">View</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 </div>
 </body>
 </html>
