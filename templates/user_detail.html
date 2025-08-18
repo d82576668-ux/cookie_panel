@@ -45,7 +45,6 @@ const img = document.getElementById("screenshot");
 const modalImg = document.getElementById("modal-img");
 const span = document.getElementsByClassName("close-modal")[0];
 
-// Скриншот в модалку
 if(img){
     img.onclick = function(){
         modal.style.display = "block";
@@ -53,17 +52,14 @@ if(img){
     }
 }
 
-// Закрытие модалки
 span.onclick = function() { modal.style.display = "none"; }
 window.onclick = function(event) { if(event.target == modal){ modal.style.display = "none"; } }
 
-// Копирование текста
 function copyText(obj){
     const text = JSON.stringify(obj, null, 2);
     navigator.clipboard.writeText(text).then(()=>alert("Copied to clipboard!"));
 }
 
-// Скачивание скриншота
 function downloadImage(base64, filename){
     const link = document.createElement('a');
     link.href = "data:image/png;base64," + base64;
