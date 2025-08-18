@@ -1,6 +1,6 @@
 Flask==3.0.0
 Flask-HTTPAuth==4.8.0
 flask-cors==4.0.0
-psycopg2-binary==2.9.9
+psycopg
 Pillow  # Обновлено до последней версии
 gunicorn==21.2.0
