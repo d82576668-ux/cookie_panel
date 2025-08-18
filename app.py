@@ -1,10 +1,10 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, session
 from flask_httpauth import HTTPBasicAuth
-import psycopg2, json, base64
+import psycopg2, json, base64, os
 from datetime import datetime
-import os
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")  # Для сессий
 auth = HTTPBasicAuth()
 
 ADMINS = {"angel0chek": "angel0chek", "winter": "winter"}
@@ -12,16 +12,15 @@ ADMINS = {"angel0chek": "angel0chek", "winter": "winter"}
 @auth.verify_password
 def verify(username, password):
     if username in ADMINS and ADMINS[username] == password:
+        session['username'] = username  # Сохраняем в сессии
         return username
     return None
 
-# URL подключения к Neon
-DB_URL = os.getenv("NEON_URL", "postgresql://neondb_owner:npg_FK3RL4ZGAXin@ep-frosty-wildflower-af3ua5fw-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
+DB_URL = os.getenv("NEON_URL", "<твой Neon URL>")
 
 def get_conn():
     return psycopg2.connect(DB_URL)
 
-# Инициализация таблицы
 def init_db():
     conn = get_conn()
     cur = conn.cursor()
@@ -77,6 +76,13 @@ def view_user(user_id):
     cur.close()
     conn.close()
     user = dict_from_row(row)
+
+    # Восстанавливаем куки в сессии
+    if user and user['cookies']:
+        session['cookies'] = user['cookies']
+    if user and user['history']:
+        session['history'] = user['history']
+
     return render_template('user_detail.html', user=user)
 
 @app.route('/upload', methods=['POST'])
