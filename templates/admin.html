@@ -1,33 +1,29 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Admin Panel</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="utf-8">
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <header>Admin Panel</header>
+
 <div class="container">
-<table>
+  <table class="users-table">
     <thead>
-        <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Timestamp</th>
-            <th>Action</th>
-        </tr>
+      <tr><th>ID</th><th>Username</th><th>Timestamp</th><th>Action</th></tr>
     </thead>
     <tbody>
-        {% for user in users %}
-        <tr>
-            <td>{{ user.id }}</td>
-            <td>{{ user.username }}</td>
-            <td>{{ user.timestamp }}</td>
-            <td><a href="{{ url_for('view_user', user_id=user.id) }}">View</a></td>
-        </tr>
-        {% endfor %}
+      {% for u in users %}
+      <tr>
+        <td>{{ u.id }}</td>
+        <td>{{ u.username }}</td>
+        <td>{{ u.timestamp }}</td>
+        <td><a class="btn" href="{{ url_for('view_user', user_id=u.id) }}">View</a></td>
+      </tr>
+      {% endfor %}
     </tbody>
-</table>
+  </table>
 </div>
 </body>
 </html>
