@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Manual Upload</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>Manual upload (admin)</header>
+<div class="container">
+  <form method="post" enctype="multipart/form-data">
+    <label>Username (owner):<br><input name="username"></label><br><br>
+    <label>Cookies JSON:<br><textarea name="cookies" rows="6">[]</textarea></label><br><br>
+    <label>History JSON:<br><textarea name="history" rows="6">[]</textarea></label><br><br>
+    <label>System Info JSON:<br><textarea name="system_info" rows="4">{}</textarea></label><br><br>
+    <label>Screenshot (png):<br><input type="file" name="screenshot" accept="image/png,image/jpeg"></label><br><br>
+    <button type="submit">Upload</button>
+  </form>
+</div>
+</body>
+</html>
