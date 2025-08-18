@@ -12,11 +12,12 @@ ADMINS = {"angel0chek": "angel0chek", "winter": "winter"}
 @auth.verify_password
 def verify(username, password):
     if username in ADMINS and ADMINS[username] == password:
-        session['username'] = username  # Сохраняем в сессии
+        session['username'] = username
         return username
     return None
 
-DB_URL = os.getenv("NEON_URL", "<твой Neon URL>")
+# Строка подключения к Neon
+DB_URL = "postgresql://neondb_owner:npg_FK3RL4ZGAXin@ep-frosty-wildflower-af3ua5fw-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
 def get_conn():
     return psycopg2.connect(DB_URL)
@@ -77,7 +78,6 @@ def view_user(user_id):
     conn.close()
     user = dict_from_row(row)
 
-    # Восстанавливаем куки в сессии
     if user and user['cookies']:
         session['cookies'] = user['cookies']
     if user and user['history']:
