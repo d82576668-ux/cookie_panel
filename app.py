@@ -244,7 +244,8 @@ def health_check():
         with get_conn() as conn, conn.cursor() as cur:
             cur.execute("SELECT 1")
             row = cur.fetchone()
-            if row and row.get(0) == 1:
+            # dict_row возвращает словарь, ключ — имя колонки
+            if row and list(row.values())[0] == 1:
                 return jsonify({"status": "ok", "database": "connected"})
         return jsonify({"status": "error", "database": "unavailable"}), 500
     except Exception as e:
