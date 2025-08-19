@@ -1,15 +1,15 @@
 /* --- Общие стили --- */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f6f8;
+    background-color: #121212;
     margin: 0;
     padding: 0;
-    color: #333;
+    color: #e0e0e0;
 }
 
 header {
-    background-color: #2c3e50;
-    color: #fff;
+    background-color: #1f1f1f;
+    color: #f5f5f5;
     padding: 1rem;
     text-align: center;
     font-size: 1.6rem;
@@ -19,10 +19,10 @@ header {
 .container {
     max-width: 1000px;
     margin: 2rem auto;
-    background-color: #fff;
+    background-color: #1e1e1e;
     padding: 1.5rem 2rem;
     border-radius: 8px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.5);
 }
 
 /* --- Таблицы --- */
@@ -34,16 +34,16 @@ table {
 
 th, td {
     padding: 0.75rem 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid #333;
     text-align: left;
 }
 
 th {
-    background-color: #ecf0f1;
+    background-color: #2c2c2c;
 }
 
 tr:hover {
-    background-color: #f1f7fb;
+    background-color: #333333;
 }
 
 .btn {
@@ -70,8 +70,10 @@ input[type="text"], textarea, input[type="file"] {
     width: 100%;
     padding: 0.5rem;
     margin-top: 0.2rem;
-    border: 1px solid #ccc;
+    border: 1px solid #555;
     border-radius: 4px;
+    background-color: #2a2a2a;
+    color: #e0e0e0;
     font-size: 0.95rem;
     box-sizing: border-box;
 }
@@ -97,11 +99,12 @@ button:hover {
 }
 
 .json-box {
-    background: #ecf0f1;
+    background: #2c2c2c;
     padding: 0.5rem;
     white-space: pre-wrap;
     border-radius: 4px;
     overflow-x: auto;
+    color: #e0e0e0;
 }
 
 .action-btn {
@@ -121,11 +124,12 @@ button:hover {
 .screenshot {
     max-width: 100%;
     margin-top: 0.5rem;
-    border: 1px solid #ccc;
+    border: 1px solid #555;
     border-radius: 4px;
 }
 
 /* --- Заголовки --- */
 h3 {
     margin-top: 1rem;
+    color: #f0f0f0;
 }
