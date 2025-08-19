@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>User {{ user.username }} Details</title>
 <style>
-  /* --- Тёмная тема и градиенты --- */
+  /* --- Тёмная тема + исходный градиент --- */
   body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -121,7 +121,7 @@ function copyField(id){
 function animateSections(){
   const sections = document.querySelectorAll('.fly-section');
   sections.forEach((sec, i) => {
-    sec.style.animationDelay = `${i * 0.1}s`; // задержка между секциями
+    sec.style.animationDelay = `${i * 0.1}s`;
     sec.classList.add('fly-section'); 
   });
 }
