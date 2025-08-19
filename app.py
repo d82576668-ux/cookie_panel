@@ -21,7 +21,10 @@ logger = logging.getLogger(__name__)
 # --- Flask setup ---
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
-app.secret_key = os.getenv("SECRET_KEY", "c1e4b3a0d5f8c7e2b3a0d5f8c7e2b3a0d5f8c7e2b3a0d5f8c7e2b3a0d5f8c7e2")
+app.secret_key = os.getenv(
+    "SECRET_KEY",
+    "c1e4b3a0d5f8c7e2b3a0d5f8c7e2b3a0d5f8c7e2b3a0d5f8c7e2b3a0d5f8c7e2"
+)
 auth = HTTPBasicAuth()
 
 # --- Config ---
@@ -32,7 +35,7 @@ ADMINS = {
 UPLOAD_API_KEY = os.getenv("UPLOAD_API_KEY", "d3b07384d113edec49eaa6238ad5ff00")
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://neondb_owner:npg_FK3RL4ZGAXin@ep-frosty-wildflower-af3ua5fw-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+    "postgresql://neondb_owner:npg_FK3RL4ZGAXin@ep-frosty-wildflower-af3ua5fw-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require"
 )
 
 if not DATABASE_URL:
@@ -63,7 +66,9 @@ def compress_image(image_data, quality=60):
 # --- Database helpers ---
 def get_conn():
     try:
+        logger.info(f"Connecting to DB: {DATABASE_URL}")
         conn = psycopg.connect(DATABASE_URL, row_factory=dict_row)
+        logger.info("Database connection successful")
         return conn
     except psycopg.OperationalError as e:
         logger.error(f"Database connection failed: {e}")
