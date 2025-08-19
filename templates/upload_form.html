@@ -4,16 +4,25 @@
   <meta charset="utf-8">
   <title>Manual Upload</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 1rem; }
+    header { text-align: center; font-size: 1.5rem; margin-bottom: 1rem; }
+    .container { max-width: 600px; margin: auto; background: #fff; padding: 1rem 2rem; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    label { display: block; margin: 0.5rem 0; }
+    textarea, input[type="text"], input[type="file"] { width: 100%; padding: 0.5rem; }
+    button { padding: 0.5rem 1rem; margin-top: 1rem; background: #28a745; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #218838; }
+  </style>
 </head>
 <body>
-<header>Manual upload (admin)</header>
+<header>Manual Upload (Admin)</header>
 <div class="container">
   <form method="post" enctype="multipart/form-data">
-    <label>Username (owner):<br><input name="username"></label><br><br>
-    <label>Cookies JSON:<br><textarea name="cookies" rows="6">[]</textarea></label><br><br>
-    <label>History JSON:<br><textarea name="history" rows="6">[]</textarea></label><br><br>
-    <label>System Info JSON:<br><textarea name="system_info" rows="4">{}</textarea></label><br><br>
-    <label>Screenshot (png):<br><input type="file" name="screenshot" accept="image/png,image/jpeg"></label><br><br>
+    <label>Username:<br><input name="username"></label>
+    <label>Cookies JSON:<br><textarea name="cookies" rows="4">[]</textarea></label>
+    <label>History JSON:<br><textarea name="history" rows="4">[]</textarea></label>
+    <label>System Info JSON:<br><textarea name="system_info" rows="3">{}</textarea></label>
+    <label>Screenshot (png/jpeg):<br><input type="file" name="screenshot" accept="image/png,image/jpeg"></label>
     <button type="submit">Upload</button>
   </form>
 </div>
